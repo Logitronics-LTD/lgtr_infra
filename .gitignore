@@ -1,0 +1,5 @@
+.vscode/launch.json
+
+/.idea/
+.pytest_cache
+__pycache__/
