@@ -137,21 +137,6 @@ tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 [package.extras]
 testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "xmlschema"]
 
-[[package]]
-name = "simple-parsing"
-version = "0.0.21.post1"
-description = "A small utility for simplifying and cleaning up argument parsing scripts."
-category = "main"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "simple_parsing-0.0.21.post1-py3-none-any.whl", hash = "sha256:5cff9984b0e37fe6d913d9af1fd85d577b9a09bc9feb87d8b9992579e5563f90"},
-    {file = "simple_parsing-0.0.21.post1.tar.gz", hash = "sha256:eff934f6dbf2e933b95e8dc66a6ea168f86dff28fdfd0223ca42b50fb527776c"},
-]
-
-[package.dependencies]
-docstring-parser = ">=0.15,<1.0"
-typing-extensions = "*"
 
 [[package]]
 name = "tomli"
