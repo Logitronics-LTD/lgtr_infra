@@ -1,13 +1,15 @@
 import datetime
+import functools
 import inspect
 import json
 import logging
 import pkgutil
 import types
 import uuid
-from typing import Optional, TypeVar, Type, Iterable, Any, Callable
+import warnings
+from typing import TypeVar, Type, Iterable, Any, Callable
 
-from simple_parsing import ArgumentParser
+import simple_parsing
 
 T = TypeVar('T')
 
@@ -20,20 +22,17 @@ def is_image_extension(suffix: str):
 
 
 def parse_dataclass_args(parse_type: Type[T], args: list[str] = None) -> T:
-    parser = ArgumentParser()
-    parser.add_arguments(parse_type, dest='dataclass')
-
-    return parser.parse_args(args).dataclass
+    warnings.warn(
+        "parse_dataclass_args is deprecated, use `simple_parsing.parse()` directly instead", DeprecationWarning
+    )
+    return simple_parsing.parse(parse_type, args=args)
 
 
 def dedup_with_serialization(
     list_objects: Iterable[Any], *, dumps: Callable = None, loads: Callable = None
 ) -> list[Any]:
-    if dumps is None:
-        dumps = lambda x: json.dumps(x, sort_keys=True)
-
-    if loads is None:
-        loads = json.loads
+    dumps = dumps or functools.partial(json.dumps, sort_keys=True)
+    loads = loads or json.loads
 
     set_serialized = set(dumps(obj) for obj in list_objects)
     return [
@@ -51,16 +50,14 @@ def htimestamp(time=None, *, with_ms=True):
         return time.strftime('%Y%m%d_%H%M%S')
 
 
-def htimestamp_parse(str_datetime: Optional[str], default=None):
-    if str_datetime:
-        try:
-            return datetime.datetime.strptime(str_datetime, '%Y%m%d_%H%M%S.%f')
+def htimestamp_parse(str_datetime: str):
+    try:
+        dt = datetime.datetime.strptime(str_datetime, '%Y%m%d_%H%M%S.%f')
 
-        except ValueError:
-            return datetime.datetime.strptime(str_datetime, '%Y%m%d_%H%M%S_%f')
-    else:
-        return default
+    except ValueError:
+        dt = datetime.datetime.strptime(str_datetime, '%Y%m%d_%H%M%S_%f')
 
+    return dt
 
 def short_uuid4():
     return str(uuid.uuid4())[:8]
@@ -79,7 +76,7 @@ def discover_sub_classes(base_class: Type, package: str | types.ModuleType):
 
     # Import the package
     if isinstance(package, str):
-        package = __import__(package_name, fromlist=[""])
+        package = __import__(package, fromlist=[""])
 
     # Traverse the package and its sub-packages
     packages_to_traverse = [package]

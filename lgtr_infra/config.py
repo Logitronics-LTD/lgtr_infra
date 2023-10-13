@@ -81,6 +81,7 @@ def update_config_py(config: T, path_config: Union[Path, str, None], *, ignore_n
     # Handle optional path or file doesn't exist
     path_config = Path(path_config)
     if ignore_non_existing_file and not path_config.exists():
+        logger.warning(f'Skipped loading file; Config file not found: {path_config}')
         return config
 
     # Path exists, load the module
