@@ -67,7 +67,7 @@ def import_module(path: Union[Path, str]):
     return module
 
 
-def update_config_py(config: T, path_config: Union[Path, str, None], *, ignore_non_existing_file=False) -> T:
+def update_config_py(config: Optional[T], path_config: Union[Path, str, None], *, ignore_non_existing_file=False) -> T:
     """
         Update a config object using a python file, optionally ignore the file if it doesn't exist
         Given config will be passed to `update()` function of the loaded module
@@ -75,7 +75,7 @@ def update_config_py(config: T, path_config: Union[Path, str, None], *, ignore_n
     """
 
     # Ignore if path is None
-    if path_config is None:
+    if not path_config:
         return config
 
     # Handle optional path or file doesn't exist

@@ -2,27 +2,25 @@
     This module requires the following packages to be installed:
     - firebase-admin
     - google-auth
+    - oauth2client
 """
 
 import contextlib
 import datetime
+import json
 import logging
+from pathlib import Path
 import time
-from typing import Optional, TypedDict, Any, Callable
+from typing import Any, Callable, Optional, TypedDict
 
-# noinspection PyUnresolvedReferences
-import cachecontrol  # Installed by auth dependencies
-# noinspection PyUnresolvedReferences
 import firebase_admin.auth  # Installed by auth dependencies
 import google.auth.crypt
 import google.auth.transport.requests
 import google.oauth2.service_account
 import requests
+from oauth2client.client import OAuth2Credentials, credentials_from_code
 
 logger = logging.getLogger(__name__)
-
-_session = google.auth.transport.requests.requests.session()
-_cached_session = cachecontrol.CacheControl(_session)
 
 
 class DecodedIdTokenDict(TypedDict):
@@ -121,6 +119,32 @@ def google_sign_in_with_refresh_token(
     )
     res.raise_for_status()
     return res.json()
+
+
+@staticmethod
+def load_credentials_service_account(scopes: list[str] = None, path_secret_json=None) -> google.oauth2.service_account.Credentials:
+    scopes = scopes or ['https://www.googleapis.com/auth/drive']
+    return google.oauth2.service_account.Credentials.from_service_account_file(str(path_secret_json), scopes=scopes)
+
+
+@staticmethod
+def load_credentials_user_code(code, client_id=None, client_secret=None, scopes=None, path_secret_web_client_json=None) -> OAuth2Credentials:
+    scopes = scopes or ['https://www.googleapis.com/auth/drive.file']
+
+    if path_secret_web_client_json:
+        path_secret = Path(path_secret_web_client_json)
+        web_client_info = json.loads(path_secret.read_text())
+        client_id = client_id or web_client_info['web']['client_id']
+        client_secret = client_secret or web_client_info['web']['client_secret']
+
+    return credentials_from_code(
+        client_id=client_id, client_secret=client_secret, scope=' '.join(scopes), code=code
+    )
+
+
+@staticmethod
+def load_credentials_user_info_obj(info: dict):
+    return google.oauth2.credentials.Credentials.from_authorized_user_info(info)
 
 
 class TokenProviderBase:
