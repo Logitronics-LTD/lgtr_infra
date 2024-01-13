@@ -4,6 +4,7 @@ import inspect
 import json
 import logging
 import pkgutil
+import subprocess
 import types
 import uuid
 import warnings
@@ -14,6 +15,10 @@ import simple_parsing
 T = TypeVar('T')
 
 IMAGE_SUFFIXES = {'.jpg', '.jpeg', '.jfif', '.png', '.bmp', '.gif', '.tiff', '.tif', '.webp'}
+
+
+def shell(cmd, **kwargs):
+    return subprocess.check_call(cmd, shell=True, **kwargs)
 
 
 def is_image_extension(suffix: str):
@@ -59,6 +64,7 @@ def htimestamp_parse(str_datetime: str):
 
     return dt
 
+
 def short_uuid4():
     return str(uuid.uuid4())[:8]
 
@@ -67,13 +73,14 @@ def htimestamp_uuid():
     return htimestamp() + '_' + short_uuid4()
 
 
-def discover_sub_classes(base_class: Type, package: str | types.ModuleType):
+def traverse_package(
+    package: str | types.ModuleType,
+    callback_module: Callable[[types.ModuleType], Any] = None,
+    callback_package: Callable[[types.ModuleType], Any] = None
+):
     """
-        Auto traverse a package and its sub-packages to find all classes that are
-        descendants of a given base class.
+        Auto traverse a package and its sub-packages and modules, and call a callback
     """
-    descendants: dict[str, Type] = {}
-
     # Import the package
     if isinstance(package, str):
         package = __import__(package, fromlist=[""])
@@ -81,20 +88,42 @@ def discover_sub_classes(base_class: Type, package: str | types.ModuleType):
     # Traverse the package and its sub-packages
     packages_to_traverse = [package]
     for package_current in packages_to_traverse:
-        for _module_loader, name, ispkg in pkgutil.walk_packages(package_current.__path__):
+        for _module_loader, name, is_pkg in pkgutil.walk_packages(package_current.__path__):
             try:
                 package_or_module = __import__(f"{package_current.__name__}.{name}", fromlist=[""])
             except (ModuleNotFoundError, NameError):
                 logging.warning(f"Skipping module {name} in package {package_current.__name__} (Unable to import)")
                 continue
 
-            if ispkg:
+            if is_pkg:
                 packages_to_traverse.append(package_or_module)
+                if callback_package is not None:
+                    callback_package(package_or_module)
             else:
-                # Import the module and get its classes
-                for cls_name, cls in inspect.getmembers(package_or_module, inspect.isclass):
-                    # Check if the class is a descendant of the base class
-                    if issubclass(cls, base_class):
-                        descendants[cls_name] = cls
+                if callback_module is not None:
+                    callback_module(package_or_module)
 
-    return descendants
+
+def discover_package_classes(package: str | types.ModuleType, criteria: Callable[[Type], bool] = None):
+    discovered_classes = []
+
+    def _callback_module(module: types.ModuleType):
+        for _cls_name, cls in inspect.getmembers(module, inspect.isclass):
+            if criteria is None or criteria(cls):
+                discovered_classes.append(cls)
+
+    traverse_package(package, callback_module=_callback_module)
+    return discovered_classes
+
+
+def discover_package_methods(package: str | types.ModuleType, criteria: Callable[[Any], bool] = None):
+    discovered_methods = []
+
+    def _callback_module(module: types.ModuleType):
+        for _func_name, func in inspect.getmembers(module, inspect.isfunction):
+            if criteria is None or criteria(func):
+                discovered_methods.append(func)
+
+    traverse_package(package, callback_module=_callback_module)
+    return discovered_methods
+
