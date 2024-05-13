@@ -18,6 +18,7 @@ oauth2client = ">=4.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.2.1"
+toml = ">=0.10.2"
 
 [build-system]
 requires = ["poetry-core"]
