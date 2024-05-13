@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "lgtr-infra"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["Willy <wolf1986@gmail.com>"]
 readme = "README.md"
@@ -14,6 +14,7 @@ simple-parsing = ">=0.1"
 retry = ">=0.9.2"
 cloudpathlib = "^0.16.0"
 httpx = "^0.25.0"
+oauth2client = ">=4.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.2.1"
