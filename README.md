@@ -3,3 +3,6 @@ PKG_VER=$(python -c "import toml; print(toml.load('pyproject.toml')['tool']['poe
 
 # Create a git tag based on the package version
 git tag -a "$PKG_VER" -m "Release version"
+
+# Push tags
+git push origin "$PKG_VER"
