@@ -14,7 +14,9 @@ import simple_parsing
 
 T = TypeVar('T')
 
-IMAGE_SUFFIXES = {'.jpg', '.jpeg', '.jfif', '.png', '.bmp', '.gif', '.tiff', '.tif', '.webp'}
+IMAGE_SUFFIXES = {
+    '.jpg', '.jpeg', '.jfif', '.png', '.bmp', '.gif', '.tiff', '.tif', '.webp'
+}
 
 
 def shell(cmd, **kwargs):
@@ -90,9 +92,11 @@ def traverse_package(
     for package_current in packages_to_traverse:
         for _module_loader, name, is_pkg in pkgutil.walk_packages(package_current.__path__):
             try:
-                package_or_module = __import__(f"{package_current.__name__}.{name}", fromlist=[""])
+                package_or_module = __import__(
+                    f"{package_current.__name__}.{name}", fromlist=[""])
             except (ModuleNotFoundError, NameError):
-                logging.warning(f"Skipping module {name} in package {package_current.__name__} (Unable to import)")
+                logging.warning(f"Skipping module {name} in package {
+                                package_current.__name__} (Unable to import)")
                 continue
 
             if is_pkg:
@@ -127,3 +131,21 @@ def discover_package_methods(package: str | types.ModuleType, criteria: Callable
     traverse_package(package, callback_module=_callback_module)
     return discovered_methods
 
+
+def transform_recursive(obj: Any, func: Callable) -> Any:
+    """
+        Recursively transforms an object using the provided function.
+
+        :param: obj: The object to transform. Supports primitives such as dict, list, etc.
+        :param: func: The transformation function to apply to each primitive element.
+    """
+    if isinstance(obj, dict):
+        obj = {k: transform_recursive(v, func) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        obj = [transform_recursive(item, func) for item in obj]
+    elif isinstance(obj, tuple):
+        obj = tuple(transform_recursive(item, func) for item in obj)
+    elif isinstance(obj, set):
+        obj = {transform_recursive(item, func) for item in obj}
+
+    return func(obj)

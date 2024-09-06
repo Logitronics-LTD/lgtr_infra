@@ -15,6 +15,9 @@ retry = ">=0.9.2"
 cloudpathlib = "^0.16.0"
 httpx = "^0.25.0"
 oauth2client = ">=4.1"
+pandas = ">=2.2.2"
+gspread = ">=6.1.2"
+
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.2.1"
