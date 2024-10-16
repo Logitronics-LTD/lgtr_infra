@@ -27,6 +27,7 @@ def open_gsheet(ss_url_or_id: str, sheet_name: str = None):
     if sheet_name:
         ws = ss.worksheet(sheet_name)
     else:
+        _, sheet_id = parse_spreadsheet_and_sheet_url(ss_url_or_id)
         ws = ss.get_worksheet_by_id(sheet_id)
 
     return ws
@@ -82,8 +83,15 @@ def append_to_gsheet(
 ):
     if isinstance(records, list):
         # List of dataclasses
-        records = [asdict(record) for record in records]
+        records = [
+            asdict(record) if not isinstance(record, Mapping) else record
+            for record in records
+        ]
         df = pd.DataFrame.from_records(records)
+    elif isinstance(records, pd.DataFrame):
+        df = records
+    else:
+        raise ValueError(f"Unsupported records type: {type(records)}")
 
     # Values to append to the sheet
     values_append = df.values.tolist()
